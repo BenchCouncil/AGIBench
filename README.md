@@ -8,7 +8,7 @@ The `datasets.json` file comprises 927 instances. Each instance features a quest
 
 To extract data tailored to your benchmarking requirements, you can employ [`jq`](https://github.com/jqlang/jq), a versatile command-line JSON processor. 
 
-For instance, if you wish to extract entries where `Knowledge (EN)` is set to "Humanities", the `Ability Branch` is "Common Sense", the difficulty level is set to 2, and there's no associated image context, you can execute the following:
+For instance, if you wish to extract entries where `Knowledge (EN)` is set to "Humanities", the `Ability Branch` is "Common Sense", the `difficulty level` is set to 2, and there's no associated image context, you can execute the following:
 
 ```bash
 jq '[.[] | select(.["Knowledge (EN)"] == "Humanities" and .["Ability Branch"] == "Common Sense" and .Level == 2 and .["Image Context"] == false)]' datasets.json > filtered_data.json
