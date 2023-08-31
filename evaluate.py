@@ -2,7 +2,12 @@ import json
 import argparse
 import openai
 import time
+import os
+
 import requests
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+# openai.api_base = os.getenv("OPENAI_API_BASE")
 
 def extract_problem(json_data, prompt):
     problem_parts = [json_data['Question']]
@@ -16,7 +21,7 @@ def extract_problem(json_data, prompt):
         problem = f"{problem}\n{prompt}"
     return problem
 
-
+# OpenAI chat API
 def ask_chatgpt(prompt, model='gpt-3.5-turbo-0301', max_tokens=512, temperature=1, n=1, **noused_args):
     while True:
         try:
@@ -33,7 +38,7 @@ def ask_chatgpt(prompt, model='gpt-3.5-turbo-0301', max_tokens=512, temperature=
             print("Retrying in 3 seconds...")
             time.sleep(3)
 
-
+# OpenAI completion API
 def ask_gpt(prompt, model='text-davinci-003', max_tokens=512, temperature=1, n=1, **noused_args):
     while True:
         try:
@@ -50,7 +55,28 @@ def ask_gpt(prompt, model='text-davinci-003', max_tokens=512, temperature=1, n=1
             print("Retrying in 3 seconds...")
             time.sleep(3)
 
+# Using API from https://github.com/lss233/chatgpt-mirai-qq-bot#-http-api. It supports various LLMs that only provide web browser access.
+def ask_ernie(endpoint, prompt, *noused_args):
+    while True:
+        try:
+            url = endpoint
+            headers = {"Content-Type": "application/json"}
+            data = {
+                "username": "AGIBench",
+                "message": prompt
+            }
+            response = requests.post(url, headers=headers, data=json.dumps(data))
+            response_json = response.json()
+            message = response_json.get('message', 'Message field not found')[0]
 
+            return message
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            print("Retrying in 30 seconds...")
+            time.sleep(30)
+
+
+# Using API from https://github.com/THUDM/ChatGLM2-6B#api-%E9%83%A8%E7%BD%B2. It supports ChatGLM and ChatGLM v2
 def ask_glm(endpoint, prompt, temperature, **noused_args):
     while True:
         try:
@@ -71,6 +97,7 @@ def ask_glm(endpoint, prompt, temperature, **noused_args):
             time.sleep(30)
 
 
+# Using API from https://github.com/lm-sys/FastChat. It supports various open-source LLMs.
 def ask_fastchat(endpoint, prompt, model_name, max_tokens, temperature, *noused_args):
     prompt_begining = "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.###Human: What are the key differences between renewable and non-renewable energy sources?###Assistant: Renewable energy sources are those that can be replenished naturally in a relatively short amount of time, such as solar, wind, hydro, geothermal, and biomass. Non-renewable energy sources, on the other hand, are finite and will eventually be depleted, such as coal, oil, and natural gas. Here are some key differences between renewable and non-renewable energy sources:\n1. Availability: Renewable energy sources are virtually inexhaustible, while non-renewable energy sources are finite and will eventually run out.\n2. Environmental impact: Renewable energy sources have a much lower environmental impact than non-renewable sources, which can lead to air and water pollution, greenhouse gas emissions, and other negative effects.\n3. Cost: Renewable energy sources can be more expensive to initially set up, but they typically have lower operational costs than non-renewable sources.\n4. Reliability: Renewable energy sources are often more reliable and can be used in more remote locations than non-renewable sources.\n5. Flexibility: Renewable energy sources are often more flexible and can be adapted to different situations and needs, while non-renewable sources are more rigid and inflexible.\n6. Sustainability: Renewable energy sources are more sustainable over the long term, while non-renewable sources are not, and their depletion can lead to economic and social instability.\n###Human:"
     prompt_ending = "###Assistant:"
@@ -114,7 +141,8 @@ def ask_llm(problem, model='text-davinci-003', **kwargs):
         'gpt-4': ask_chatgpt,
         'llama-13b': ask_fastchat,
         'chatglm': ask_glm,
-        'chatglm2': ask_glm
+        'chatglm2': ask_glm,
+        'ernie': ask_ernie
     }
     kwargs['model'] = model
     kwargs['prompt'] = problem
